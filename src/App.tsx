@@ -58,6 +58,7 @@ function AppLayout() {
   const { role, setRole } = useRole()
   const [showTour, setShowTour] = useState(false)
   const [ndaAccepted, setNdaAccepted] = useState(() => sessionStorage.getItem('nda') === '1')
+  const [roleSwitcherSeen, setRoleSwitcherSeen] = useState(() => localStorage.getItem('role_switcher_seen') === '1')
   const location = useLocation()
 
   useEffect(() => {
@@ -85,14 +86,25 @@ function AppLayout() {
             >
               Demo průchod
             </button>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="text-xs bg-white/10 border border-white/20 text-white rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-gold"
-            >
-              <option value="end_user" className="text-gray-900">Uživatel</option>
-              <option value="admin" className="text-gray-900">Správce</option>
-            </select>
+            <div className="relative" title={!roleSwitcherSeen ? 'Přepněte roli' : undefined}>
+              <select
+                value={role}
+                onChange={(e) => {
+                  setRole(e.target.value as Role)
+                  if (!roleSwitcherSeen) {
+                    setRoleSwitcherSeen(true)
+                    localStorage.setItem('role_switcher_seen', '1')
+                  }
+                }}
+                className="text-xs bg-white/10 border border-white/20 text-white rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-gold"
+              >
+                <option value="end_user" className="text-gray-900">Uživatel</option>
+                <option value="admin" className="text-gray-900">Správce</option>
+              </select>
+              {!roleSwitcherSeen && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-gold rounded-full animate-pulse-dot pointer-events-none" />
+              )}
+            </div>
           </div>
         </div>
 
