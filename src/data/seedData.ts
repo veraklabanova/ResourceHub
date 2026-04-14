@@ -74,9 +74,22 @@ export const reservations: Reservation[] = [
 ]
 
 export const conflicts: Conflict[] = [
+  // Historické vyřešené (napojené na SEED_DECISION_LOG v DecisionContext)
   { id: 'c1', rezervace_id: 'res1', typ: 'no_show', popis: 'Uživatel se nedostavil na rezervovanou zasedačku, ostatní čekali.', řešení: 'Upozornění zasláno, příště bude eskalováno.', stav: 'vyřešený', vytvořeno: '2026-01-05T12:00' },
   { id: 'c2', rezervace_id: 'res9', typ: 'no_show', popis: 'Zasedačka blokována celé dopoledne, nikdo nepřišel.', řešení: 'Telefonický kontakt, omluva přijata.', stav: 'vyřešený', vytvořeno: '2026-02-02T13:00' },
   { id: 'c3', rezervace_id: 'res14', typ: 'neoprávněné_užití', popis: 'Vůz používán osobou bez platné rezervace.', řešení: 'Interní šetření, uživateli odebrán přístup na 2 týdny.', stav: 'vyřešený', vytvořeno: '2026-02-10T19:00' },
   { id: 'c4', rezervace_id: 'res19', typ: 'neoprávněné_užití', popis: 'Vůz vrácen pozdě, překryv s další rezervací.', řešení: 'Domluva s oběma stranami, posunutí druhé rezervace.', stav: 'vyřešený', vytvořeno: '2026-03-04T15:00' },
-  { id: 'c5', rezervace_id: 'res29', typ: 'dvojitá_rezervace', popis: 'Systémem prošly dvě souběžné rezervace na zasedačku A.', řešení: '', stav: 'čeká_na_řešení', vytvořeno: '2026-04-13T09:30' },
+
+  // Historický vyřešený no_show (DR-005 v DecisionContext)
+  { id: 'c6', rezervace_id: 'res20', typ: 'no_show', popis: 'Notebook rezervován na celý den, uživatel se nedostavil a nekomunikoval.', řešení: 'Kontaktován telefonicky, notebook uvolněn.', stav: 'vyřešený', vytvořeno: '2026-03-20T10:00' },
+
+  // ─── Otevřené konflikty čekající na řešení (demo Decision Panel) ───
+  // KCS-04: dvojitá_rezervace — dva legitimní nároky na zasedačku A
+  { id: 'c5', rezervace_id: 'res29', typ: 'dvojitá_rezervace', popis: 'Systémem prošly dvě souběžné rezervace na zasedačku A — Sprint planning (u1) a Retrospektiva (u9). Oba mají platnou rezervaci na 13.4. 9:00–11:00.', řešení: '', stav: 'čeká_na_řešení', vytvořeno: '2026-04-13T09:30' },
+
+  // KCS-02: no_show — uživatel nepřišel na kamerový zdroj
+  { id: 'c7', rezervace_id: 'res31', typ: 'no_show', popis: 'Kamera Sony A7III rezervována pro natáčení promo videa (u3). Uživatel se nedostavil, kamera blokována. Čeká se na kontaktování.', řešení: '', stav: 'čeká_na_řešení', vytvořeno: '2026-04-13T11:00' },
+
+  // KCS-03: neoprávněné_užití — zasedačka B obsazená bez rezervace
+  { id: 'c8', rezervace_id: 'res30', typ: 'neoprávněné_užití', popis: 'Zasedačka B (3. patro) obsazená neoprávněným uživatelem. Petra Svobodová (u2) má platnou rezervaci na pohovor ve 13:00, ale zasedačka je zablokovaná jiným týmem bez rezervace.', řešení: '', stav: 'čeká_na_řešení', vytvořeno: '2026-04-13T13:05' },
 ]
