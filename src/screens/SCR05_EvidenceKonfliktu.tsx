@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRole } from '../context/RoleContext'
-import { getConflicts, createConflict, getAllReservations } from '../api/mockHandlers'
+import { useDecision } from '../context/DecisionContext'
+import { getConflicts, createConflict, getAllReservations, resolveConflictById } from '../api/mockHandlers'
 import type { Conflict, Reservation, ConflictType } from '../data/types'
 import { resources } from '../data/seedData'
 import PrimaryButton from '../components/PrimaryButton'
@@ -11,6 +12,7 @@ import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorToast from '../components/ErrorToast'
 import ConfirmationModal from '../components/ConfirmationModal'
+import DecisionPanel from '../components/DecisionPanel'
 
 type Tab = 'otevřené' | 'vyřešené'
 
@@ -22,6 +24,7 @@ const conflictTypes = [
 
 export default function SCR05_EvidenceKonfliktu() {
   const { role } = useRole()
+  const { isResolved: isDecisionResolved } = useDecision()
   const [conflicts, setConflicts] = useState<Conflict[]>([])
   const [allReservations, setAllReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,6 +33,7 @@ export default function SCR05_EvidenceKonfliktu() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('otevřené')
   const [selectedConflict, setSelectedConflict] = useState<Conflict | null>(null)
+  const [decisionConflict, setDecisionConflict] = useState<Conflict | null>(null)
 
   // Form
   const [typ, setTyp] = useState<ConflictType | ''>('')
@@ -75,7 +79,7 @@ export default function SCR05_EvidenceKonfliktu() {
     }
   }
 
-  const open = conflicts.filter((c) => c.stav === 'otevřený')
+  const open = conflicts.filter((c) => c.stav === 'otevřený' || c.stav === 'čeká_na_řešení')
   const resolved = conflicts.filter((c) => c.stav === 'vyřešený')
   const activeReservations = allReservations.filter((r) => r.stav === 'aktivní' || r.stav === 'vytvořena')
 
@@ -111,6 +115,21 @@ export default function SCR05_EvidenceKonfliktu() {
             <button onClick={() => setSelectedConflict(null)} className="text-sm text-brand-gold hover:underline">Zavřít</button>
           </div>
         </div>
+      )}
+
+      {decisionConflict && (
+        <DecisionPanel
+          conflictId={decisionConflict.id}
+          conflictType={decisionConflict.typ}
+          situation={decisionConflict.popis}
+          onResolved={async () => {
+            await resolveConflictById(role, decisionConflict.id, 'Vyřešeno přes Decision Panel')
+            setDecisionConflict(null)
+            setSuccessMsg('Konflikt vyřešen přes Decision Panel.')
+            load()
+          }}
+          onClose={() => setDecisionConflict(null)}
+        />
       )}
 
       <h1 className="text-xl font-bold text-brand-dark">Evidence konfliktů</h1>
@@ -168,6 +187,17 @@ export default function SCR05_EvidenceKonfliktu() {
               </div>
               <p className="text-sm text-gray-500">{getReservationLabel(c.rezervace_id)}</p>
               <p className="text-xs text-gray-400 mt-1 line-clamp-2">{c.popis}</p>
+              {(c.stav === 'otevřený' || c.stav === 'čeká_na_řešení') && !isDecisionResolved(c.id) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDecisionConflict(c)
+                  }}
+                  className="mt-2 text-xs px-3 py-1 bg-brand-gold text-brand-dark font-medium rounded-lg hover:bg-yellow-400 transition-colors"
+                >
+                  Řešit přes Decision Panel
+                </button>
+              )}
             </DataCard>
           ))}
         </div>

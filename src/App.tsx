@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { RoleProvider, useRole } from './context/RoleContext'
+import { DecisionProvider, useDecision } from './context/DecisionContext'
 import SCR01_Dashboard from './screens/SCR01_Dashboard'
 import SCR02_Rezervace from './screens/SCR02_Rezervace'
 import SCR03_MojeRezervace from './screens/SCR03_MojeRezervace'
 import SCR04_SpravaZdroju from './screens/SCR04_SpravaZdroju'
 import SCR05_EvidenceKonfliktu from './screens/SCR05_EvidenceKonfliktu'
 import DemoWalkthrough from './tour/DemoWalkthrough'
+import DecisionLogDrawer from './components/DecisionLogDrawer'
 import type { Role } from './data/types'
 
 function NDAModal({ onAccept }: { onAccept: () => void }) {
@@ -56,7 +58,9 @@ const navItems = [
 
 function AppLayout() {
   const { role, setRole } = useRole()
+  const { log } = useDecision()
   const [showTour, setShowTour] = useState(false)
+  const [showDecisionLog, setShowDecisionLog] = useState(false)
   const [ndaAccepted, setNdaAccepted] = useState(() => sessionStorage.getItem('nda') === '1')
   const [roleSwitcherSeen, setRoleSwitcherSeen] = useState(() => localStorage.getItem('role_switcher_seen') === '1')
   const location = useLocation()
@@ -74,12 +78,26 @@ function AppLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       {showTour && <DemoWalkthrough onClose={() => setShowTour(false)} />}
+      {showDecisionLog && <DecisionLogDrawer onClose={() => setShowDecisionLog(false)} />}
 
       {/* Header */}
       <header className="bg-brand-dark text-white sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <span className="text-sm font-bold tracking-wide text-brand-gold">ResourceHub</span>
           <div className="flex items-center gap-3">
+            {role === 'admin' && (
+              <button
+                onClick={() => setShowDecisionLog(true)}
+                className="relative text-xs px-3 py-1 border border-brand-gold/50 text-brand-gold rounded-full hover:bg-brand-gold/10 transition-colors"
+              >
+                Decision Log
+                {log.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-brand-gold text-brand-dark text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {log.length}
+                  </span>
+                )}
+              </button>
+            )}
             <button
               onClick={() => setShowTour(true)}
               className="text-xs px-3 py-1 border border-brand-gold/50 text-brand-gold rounded-full hover:bg-brand-gold/10 transition-colors"
@@ -147,10 +165,12 @@ function AppLayout() {
 export default function App() {
   return (
     <RoleProvider>
-      <Routes>
-        <Route path="/preview" element={<PreviewPage />} />
-        <Route path="/*" element={<AppLayout />} />
-      </Routes>
+      <DecisionProvider>
+        <Routes>
+          <Route path="/preview" element={<PreviewPage />} />
+          <Route path="/*" element={<AppLayout />} />
+        </Routes>
+      </DecisionProvider>
     </RoleProvider>
   )
 }

@@ -101,11 +101,54 @@ export async function createConflict(
     typ: data.typ,
     popis: data.popis,
     řešení: data.řešení,
-    stav: data.řešení ? 'vyřešený' : 'otevřený',
+    stav: data.řešení ? 'vyřešený' : 'čeká_na_řešení',
     vytvořeno: new Date().toISOString(),
   }
   conflicts = [...conflicts, newConflict]
   return newConflict
+}
+
+// Decision Layer: resolve conflict (human-in-the-loop)
+export async function resolveConflictById(role: Role, conflictId: string, řešení: string) {
+  await delay()
+  if (!checkRBAC(role, ['admin'])) throw new Error('403')
+
+  const conflict = conflicts.find((c) => c.id === conflictId)
+  if (!conflict) throw new Error('Konflikt nenalezen.')
+  if (conflict.stav === 'vyřešený') throw new Error('Konflikt již byl vyřešen.')
+
+  conflicts = conflicts.map((c) =>
+    c.id === conflictId ? { ...c, řešení, stav: 'vyřešený' as const } : c
+  )
+  return conflicts.find((c) => c.id === conflictId)!
+}
+
+// Decision Layer: SLA fallback check (automatic L1)
+export async function checkSlaFallbacks(role: Role) {
+  await delay()
+  if (!checkRBAC(role, ['admin'])) throw new Error('403')
+
+  const now = new Date()
+  const fallbacks: Conflict[] = []
+
+  conflicts = conflicts.map((c) => {
+    if (c.stav !== 'čeká_na_řešení') return c
+    const created = new Date(c.vytvořeno)
+    const slaMinutes = c.typ === 'no_show' ? 60 : c.typ === 'neoprávněné_užití' ? 30 : 120
+    const deadline = new Date(created.getTime() + slaMinutes * 60 * 1000)
+    if (now > deadline) {
+      const resolved = {
+        ...c,
+        stav: 'vyřešený' as const,
+        řešení: `Systém (timeout fallback) — SLA ${slaMinutes} min překročeno`,
+      }
+      fallbacks.push(resolved)
+      return resolved
+    }
+    return c
+  })
+
+  return fallbacks
 }
 
 // GET conflicts (helper for SCR-05)

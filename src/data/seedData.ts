@@ -78,5 +78,5 @@ export const conflicts: Conflict[] = [
   { id: 'c2', rezervace_id: 'res9', typ: 'no_show', popis: 'Zasedačka blokována celé dopoledne, nikdo nepřišel.', řešení: 'Telefonický kontakt, omluva přijata.', stav: 'vyřešený', vytvořeno: '2026-02-02T13:00' },
   { id: 'c3', rezervace_id: 'res14', typ: 'neoprávněné_užití', popis: 'Vůz používán osobou bez platné rezervace.', řešení: 'Interní šetření, uživateli odebrán přístup na 2 týdny.', stav: 'vyřešený', vytvořeno: '2026-02-10T19:00' },
   { id: 'c4', rezervace_id: 'res19', typ: 'neoprávněné_užití', popis: 'Vůz vrácen pozdě, překryv s další rezervací.', řešení: 'Domluva s oběma stranami, posunutí druhé rezervace.', stav: 'vyřešený', vytvořeno: '2026-03-04T15:00' },
-  { id: 'c5', rezervace_id: 'res29', typ: 'dvojitá_rezervace', popis: 'Systémem prošly dvě souběžné rezervace na zasedačku A.', řešení: '', stav: 'otevřený', vytvořeno: '2026-04-13T09:30' },
+  { id: 'c5', rezervace_id: 'res29', typ: 'dvojitá_rezervace', popis: 'Systémem prošly dvě souběžné rezervace na zasedačku A.', řešení: '', stav: 'čeká_na_řešení', vytvořeno: '2026-04-13T09:30' },
 ]

@@ -45,7 +45,7 @@ RezervaceZdroju/
 │   ├── favicon.png                # Light mode favicon
 │   └── favicon-dark.png           # Dark mode favicon
 ├── src/
-│   ├── components/                # Globální UI komponenty (Fáze B)
+│   ├── components/                # Globální UI komponenty (Fáze B + D2)
 │   │   ├── PrimaryButton.tsx
 │   │   ├── SecondaryButton.tsx
 │   │   ├── TextInput.tsx
@@ -55,7 +55,9 @@ RezervaceZdroju/
 │   │   ├── ErrorToast.tsx
 │   │   ├── ConfirmationModal.tsx
 │   │   ├── LoadingSpinner.tsx
-│   │   └── StatusBadge.tsx
+│   │   ├── StatusBadge.tsx
+│   │   ├── DecisionPanel.tsx      # Decision Layer L2
+│   │   └── DecisionLogDrawer.tsx  # Decision Layer L2
 │   ├── screens/                   # Obrazovky (Fáze C)
 │   │   ├── SCR01_Dashboard.tsx
 │   │   ├── SCR02_Rezervace.tsx
@@ -67,8 +69,9 @@ RezervaceZdroju/
 │   ├── data/                      # Seed data + typy (Fáze F)
 │   │   ├── types.ts
 │   │   └── seedData.ts
-│   ├── context/                   # Role context (Fáze D)
-│   │   └── RoleContext.tsx
+│   ├── context/                   # Role context (Fáze D) + Decision Layer (Fáze D2)
+│   │   ├── RoleContext.tsx
+│   │   └── DecisionContext.tsx
 │   ├── tour/                      # Demo walkthrough (Fáze G)
 │   │   └── DemoWalkthrough.tsx
 │   ├── App.tsx
@@ -157,6 +160,26 @@ npm install
 npm run dev
 ```
 Aplikace běží na `http://localhost:5173`.
+
+## Decision Layer — Level 2 (Runtime + Strategic)
+
+`decision_layer_level: 2`
+
+PA MACHINE_DATA obsahuje 4 KCS, z toho 3 s manual_escalation → Level 2 (Runtime + Strategic).
+
+### Decision Strategies (z PA MACHINE_DATA)
+
+| KCS | Typ | SLA | Fallback | Guardrail | Varianty |
+|-----|-----|-----|----------|-----------|----------|
+| KCS-01 | preventive_guard | — | — | INV-01 | Automatická: first-come-first-served |
+| KCS-02 | manual_escalation | 60 min | Automatický přechod do no_show, zdroj uvolněn | — | 1) Upozornit uživatele 2) Evidovat no-show |
+| KCS-03 | manual_escalation | 30 min | Neoprávněný musí uvolnit | — | 1) Předat zdroj rezervantovi 2) Domluvit sdílení |
+| KCS-04 | manual_escalation | 120 min | Starší rezervace vyhrává | — | 1) Priorita dle naléhavosti 2) Starší rezervace 3) Alternativní zdroj |
+
+### Komponenty (Fáze D2)
+- `src/context/DecisionContext.tsx` — Decision strategies, decision log, SLA fallback, guardrails, pattern detection
+- `src/components/DecisionPanel.tsx` — Modal pro rozhodování s SLA countdown
+- `src/components/DecisionLogDrawer.tsx` — Drawer se záznamy + Strategic Insights záložka
 
 ## Out of scope
 - Reálný backend (pouze mock data)
