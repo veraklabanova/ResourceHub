@@ -8,6 +8,7 @@ const statusStyles: Record<BadgeStatus, string> = {
   'dokončena': 'bg-gray-100 text-gray-600',
   'zrušena': 'bg-red-100 text-red-600',
   'otevřený': 'bg-orange-100 text-orange-700',
+  'čeká_na_řešení': 'bg-amber-100 text-amber-800',
   'vyřešený': 'bg-green-100 text-green-700',
 }
 
@@ -17,6 +18,7 @@ const statusLabels: Record<BadgeStatus, string> = {
   'dokončena': 'Dokončena',
   'zrušena': 'Zrušena',
   'otevřený': 'Otevřený',
+  'čeká_na_řešení': 'Čeká na řešení',
   'vyřešený': 'Vyřešený',
 }
 

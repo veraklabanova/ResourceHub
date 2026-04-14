@@ -87,25 +87,87 @@ export async function getMyReservations(role: Role, userId: string) {
   return reservations.filter((r) => r.uživatel_id === userId)
 }
 
-// POST /api/conflicts
+// POST /api/conflicts — creates conflict in transient state (čeká_na_řešení)
 export async function createConflict(
   role: Role,
-  data: { rezervace_id: string; typ: ConflictType; popis: string; řešení: string }
+  data: { rezervace_id: string; typ: ConflictType; popis: string; řešení: string; sla_minutes?: number }
 ) {
   await delay()
   if (!checkRBAC(role, ['admin'])) throw new Error('403')
 
+  const slaMinutes = data.sla_minutes ?? 60
   const newConflict: Conflict = {
     id: `c${Date.now()}`,
     rezervace_id: data.rezervace_id,
     typ: data.typ,
     popis: data.popis,
-    řešení: data.řešení,
-    stav: data.řešení ? 'vyřešený' : 'otevřený',
+    řešení: '',
+    stav: 'čeká_na_řešení',
     vytvořeno: new Date().toISOString(),
+    eskalace: 'L2',
+    sla_deadline: new Date(Date.now() + slaMinutes * 60 * 1000).toISOString(),
   }
   conflicts = [...conflicts, newConflict]
   return newConflict
+}
+
+// POST /api/conflicts/:id/resolve — Decision Layer: resolve conflict with chosen variant
+export async function resolveConflict(
+  role: Role,
+  conflictId: string,
+  data: { varianta_id: string; varianta_název: string; rozhodl: string; zdůvodnění: string }
+) {
+  await delay()
+  if (!checkRBAC(role, ['admin'])) throw new Error('403')
+
+  const conflict = conflicts.find((c) => c.id === conflictId)
+  if (!conflict) throw new Error('Konflikt nenalezen.')
+
+  // Guardrail: no re-resolution without correction record
+  if (conflict.stav === 'vyřešený') {
+    throw new Error('Guardrail: Konflikt je již vyřešen. Změna rozhodnutí vyžaduje korekční záznam.')
+  }
+
+  conflicts = conflicts.map((c) =>
+    c.id === conflictId
+      ? {
+          ...c,
+          stav: 'vyřešený' as const,
+          řešení: data.varianta_název,
+          rozhodl: data.rozhodl,
+          zdůvodnění: data.zdůvodnění,
+          rozhodnuto: new Date().toISOString(),
+        }
+      : c
+  )
+  return conflicts.find((c) => c.id === conflictId)!
+}
+
+// SLA fallback — auto-resolve expired conflicts
+export async function checkSlaFallbacks(role: Role) {
+  await delay()
+  if (!checkRBAC(role, ['admin'])) throw new Error('403')
+
+  const now = new Date()
+  const expired: Conflict[] = []
+
+  conflicts = conflicts.map((c) => {
+    if (c.stav === 'čeká_na_řešení' && c.sla_deadline && new Date(c.sla_deadline) <= now) {
+      const resolved = {
+        ...c,
+        stav: 'vyřešený' as const,
+        řešení: '[AUTOMATICKÝ FALLBACK] — SLA vypršelo.',
+        rozhodl: 'Systém (timeout fallback)',
+        zdůvodnění: 'SLA vypršelo bez rozhodnutí správce. Aplikován automatický fallback.',
+        rozhodnuto: now.toISOString(),
+      }
+      expired.push(resolved)
+      return resolved
+    }
+    return c
+  })
+
+  return expired
 }
 
 // GET conflicts (helper for SCR-05)
